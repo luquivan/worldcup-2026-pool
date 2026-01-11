@@ -273,3 +273,41 @@ export const subscribeToLeaderboard = (
   });
   return unsubscribe;
 };
+
+/**
+ * Delete a user account and all associated data
+ * Removes: user data, username claim, predictions, league memberships
+ */
+export const deleteUserAccount = async (
+  uid: string,
+  userName: string
+): Promise<void> => {
+  const normalizedUsername = normalizeUsername(userName);
+
+  // Get user's leagues to leave them
+  const userLeaguesRef = ref(db, `userLeagues/${uid}`);
+  const userLeaguesSnapshot = await get(userLeaguesRef);
+
+  if (userLeaguesSnapshot.exists()) {
+    const leagueIds = Object.keys(
+      userLeaguesSnapshot.val() as Record<string, boolean>
+    );
+
+    // Leave all leagues (remove from leagueMembers)
+    for (const leagueId of leagueIds) {
+      await remove(ref(db, `leagueMembers/${leagueId}/${uid}`));
+    }
+
+    // Remove userLeagues entry
+    await remove(userLeaguesRef);
+  }
+
+  // Remove all predictions
+  await remove(ref(db, `predictions/${uid}`));
+
+  // Remove username claim
+  await remove(ref(db, `usernames/${normalizedUsername}`));
+
+  // Remove user data
+  await remove(ref(db, `users/${uid}`));
+};

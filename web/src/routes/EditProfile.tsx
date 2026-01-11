@@ -1,15 +1,21 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { signOut } from 'firebase/auth';
+import { auth } from '../firebase';
 import {
   AppLayout,
   Card,
   Button,
   LinkButton,
   ProfilePicture,
+  useConfirm,
 } from '../components';
 import { useAuth } from '../hooks/useAuth';
+import { useToast } from '../hooks/useToast';
 import {
   checkUsernameAvailable,
+  deleteUserAccount,
+  getLeaguesOwnedByUser,
   isReservedUsername,
   sanitizeUsername,
   updateUserProfile,
@@ -19,11 +25,14 @@ import {
 export const EditProfile = () => {
   const navigate = useNavigate();
   const { user, userData, setUserData } = useAuth();
+  const { showToast } = useToast();
+  const { showConfirm, ConfirmDialogComponent } = useConfirm();
   const [userName, setUserName] = React.useState(userData?.userName ?? '');
   const [displayName, setDisplayName] = React.useState(
     userData?.displayName ?? ''
   );
   const [saving, setSaving] = React.useState(false);
+  const [deleting, setDeleting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [usernameStatus, setUsernameStatus] = React.useState<
     'idle' | 'checking' | 'available' | 'taken' | 'reserved'
@@ -137,6 +146,42 @@ export const EditProfile = () => {
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to update profile');
       setSaving(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!user || !userData) return;
+
+    // Check if user owns any leagues
+    const ownedLeagues = await getLeaguesOwnedByUser(user.uid);
+    if (ownedLeagues.length > 0) {
+      const leagueNames = ownedLeagues.map((l) => l.name).join(', ');
+      showToast(
+        `You must delete or transfer ownership of your leagues first: ${leagueNames}`,
+        'error'
+      );
+      return;
+    }
+
+    const confirmed = await showConfirm({
+      title: 'Delete Account',
+      message:
+        'Are you sure you want to permanently delete your account? This will remove all your data, predictions, and league memberships. This action cannot be undone.',
+      confirmText: 'Delete Account',
+    });
+
+    if (!confirmed) return;
+
+    setDeleting(true);
+    try {
+      await deleteUserAccount(user.uid, userData.userName);
+      await signOut(auth);
+      showToast('Account deleted successfully', 'success');
+      void navigate('/', { replace: true });
+    } catch (err) {
+      console.error('Error deleting account:', err);
+      showToast('Failed to delete account', 'error');
+      setDeleting(false);
     }
   };
 
@@ -290,10 +335,23 @@ export const EditProfile = () => {
                   )}
                 </Button>
               </div>
+
+              {/* Delete Account */}
+              <div className="mt-6 pt-6 border-t border-white/10 text-center">
+                <button
+                  type="button"
+                  onClick={() => void handleDeleteAccount()}
+                  disabled={deleting}
+                  className="text-red-500/70 hover:text-red-400 text-sm transition-colors disabled:opacity-50 hover:cursor-pointer"
+                >
+                  {deleting ? 'Deleting...' : 'Delete my account'}
+                </button>
+              </div>
             </form>
           </Card>
         </div>
       </div>
+      {ConfirmDialogComponent}
     </AppLayout>
   );
 };

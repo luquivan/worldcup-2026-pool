@@ -3,6 +3,7 @@ export type { Match, MatchesData } from './matchService';
 
 export {
   checkUsernameAvailable,
+  deleteUserAccount,
   getUserByUsername,
   handleUserLogin,
   isReservedUsername,
@@ -29,6 +30,7 @@ export {
   getLeagueBySlug,
   getLeagueByInviteCode,
   getLeagueMembers,
+  getLeaguesOwnedByUser,
   isLeagueMember,
   joinLeague,
   leaveLeague,

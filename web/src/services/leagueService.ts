@@ -329,6 +329,29 @@ export const uploadLeagueImage = async (
 };
 
 /**
+ * Get all leagues owned by a user
+ */
+export const getLeaguesOwnedByUser = async (
+  userId: string
+): Promise<LeagueWithId[]> => {
+  const leaguesRef = ref(db, 'leagues');
+  const snapshot = await get(leaguesRef);
+
+  if (!snapshot.exists()) return [];
+
+  const leagues = snapshot.val() as Record<string, League>;
+  const ownedLeagues: LeagueWithId[] = [];
+
+  for (const [id, league] of Object.entries(leagues)) {
+    if (league.ownerId === userId) {
+      ownedLeagues.push({ id, ...league });
+    }
+  }
+
+  return ownedLeagues;
+};
+
+/**
  * Delete a league and all associated data (owner/admin only)
  */
 export const deleteLeague = async (
