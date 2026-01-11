@@ -394,7 +394,7 @@ export const EditLeague = () => {
                     type="button"
                     onClick={() => void handleDelete()}
                     disabled={deleting}
-                    className="text-sm text-red-400/70 hover:text-red-400 transition-colors disabled:opacity-50"
+                    className="text-sm text-red-400/70 hover:text-red-400 transition-colors disabled:opacity-50 hover:cursor-pointer"
                   >
                     {deleting ? 'Deleting...' : 'Delete this league'}
                   </button>
