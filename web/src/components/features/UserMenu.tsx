@@ -265,7 +265,7 @@ export const UserMenu = ({ mobile = false }: UserMenuProps) => {
             createPortal(
               <ul
                 ref={dropdownRef}
-                className="p-0 fixed left-0 right-0 bg-black/80 backdrop-blur-lg border-b border-white/10 shadow-xl z-50"
+                className="p-2 fixed left-0 right-0 bg-black/80 backdrop-blur-lg border-b border-white/10 shadow-xl z-50"
                 style={{ top: 'calc(env(safe-area-inset-top) + 57px)' }}
               >
                 {menuContent}
@@ -275,7 +275,7 @@ export const UserMenu = ({ mobile = false }: UserMenuProps) => {
           ) : (
             <ul
               ref={dropdownRef}
-              className="p-0 w-full backdrop-blur-2xl bg-black/20 border border-white/10 border-t-0 rounded-b-xl"
+              className="p-2 w-full backdrop-blur-2xl bg-black/20 border border-white/10 border-t-0 rounded-b-xl"
             >
               {menuContent}
             </ul>
