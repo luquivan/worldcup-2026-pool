@@ -2,6 +2,13 @@
 
 A betting pool web application for the FIFA World Cup 2026. Built with React, TypeScript, and Firebase.
 
+### 🚀 **Play Now**
+
+Join the action live at **[worldcup-2026.web.app](https://worldcup-2026.web.app/)**!
+
+> [!NOTE]
+> 🚧 **Status:** Currently in public beta testing.
+
 ## Features
 
 - 🔐 Google authentication
