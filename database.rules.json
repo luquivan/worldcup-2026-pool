@@ -79,6 +79,8 @@
     "leagueMembers": {
       ".read": true,
       "$leagueId": {
+        // Allow owner or admin to delete the entire member list (for league deletion)
+        ".write": "auth != null && (root.child('leagues').child($leagueId).child('ownerId').val() === auth.uid || root.child('users').child(auth.uid).child('admin').val() === true)",
         "$userId": {
           // Users can add/remove themselves, league owner can remove members, admin can remove anyone
           ".write": "auth != null && (auth.uid === $userId || root.child('leagues').child($leagueId).child('ownerId').val() === auth.uid || root.child('users').child(auth.uid).child('admin').val() === true)"
