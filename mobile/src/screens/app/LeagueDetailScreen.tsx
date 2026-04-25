@@ -151,8 +151,7 @@ export const LeagueDetailScreen: React.FC<Props> = ({ navigation, route }) => {
         <Text style={styles.rankText}>{index + 1}</Text>
       </View>
       <View style={styles.memberInfo}>
-        <Text style={styles.memberName}>{item.displayName || item.userName || 'Usuario'}</Text>
-        <Text style={styles.memberUser}>@{item.userName}</Text>
+        <Text style={styles.memberName}>{item.displayName || 'Usuario'}</Text>
       </View>
       <Text style={styles.points}>{item.score ?? 0} pts</Text>
     </View>

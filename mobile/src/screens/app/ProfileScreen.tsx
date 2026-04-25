@@ -18,34 +18,24 @@ export const ProfileScreen: React.FC = () => {
   const { user, userData, setUserData } = useAuth();
   const [editing, setEditing] = useState(false);
   const [displayName, setDisplayName] = useState(userData?.displayName ?? '');
-  const [userName, setUserName] = useState(userData?.userName ?? '');
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     setDisplayName(userData?.displayName ?? '');
-    setUserName(userData?.userName ?? '');
-  }, [userData?.displayName, userData?.userName]);
+  }, [userData?.displayName]);
 
   const handleSave = async () => {
     if (!user || !userData) return;
-
-    const finalDisplayName = displayName.trim();
-    const finalUserName = userName.trim();
-
-    if (!finalDisplayName || finalUserName.length < 3) {
-      Alert.alert('Error', 'El nombre es obligatorio y el username necesita al menos 3 caracteres');
+    const name = displayName.trim();
+    if (!name) {
+      Alert.alert('Error', 'El nombre de usuario es obligatorio');
       return;
     }
-
     setSaving(true);
     try {
-      await updateUserProfile(
-        user.uid,
-        { displayName: finalDisplayName, userName: finalUserName },
-        userData.userName
-      );
-      setUserData({ ...userData, displayName: finalDisplayName, userName: finalUserName });
+      await updateUserProfile(user.uid, name);
+      setUserData({ ...userData, displayName: name });
       setEditing(false);
     } catch (e: any) {
       Alert.alert('Error', e.message ?? 'No se pudo actualizar el perfil');
@@ -56,7 +46,6 @@ export const ProfileScreen: React.FC = () => {
 
   const handleDeleteAccount = () => {
     if (!user || !userData) return;
-
     Alert.alert(
       'Eliminar cuenta',
       'Se van a borrar tus datos, predicciones y membresías de ligas. Esta acción no se puede deshacer.',
@@ -68,7 +57,7 @@ export const ProfileScreen: React.FC = () => {
           onPress: async () => {
             setDeleting(true);
             try {
-              await deleteUserAccount(user.uid, userData.userName);
+              await deleteUserAccount(user.uid);
               await logout();
             } catch (e: any) {
               Alert.alert('Error', e.message ?? 'No se pudo eliminar la cuenta');
@@ -80,9 +69,7 @@ export const ProfileScreen: React.FC = () => {
     );
   };
 
-  const initials = (userData?.displayName || user?.displayName || userData?.userName || 'U')
-    .slice(0, 1)
-    .toUpperCase();
+  const initials = (userData?.displayName || user?.displayName || 'U').slice(0, 1).toUpperCase();
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -99,7 +86,6 @@ export const ProfileScreen: React.FC = () => {
       {!editing ? (
         <View style={styles.card}>
           <Text style={styles.name}>{userData?.displayName || user?.displayName || 'Usuario'}</Text>
-          <Text style={styles.username}>@{userData?.userName ?? 'usuario'}</Text>
           <Text style={styles.email}>{user?.email}</Text>
           <View style={styles.scoreBox}>
             <Text style={styles.scoreLabel}>Puntos totales</Text>
@@ -114,21 +100,11 @@ export const ProfileScreen: React.FC = () => {
           <Text style={styles.formTitle}>Editar perfil</Text>
           <TextInput
             style={styles.input}
-            placeholder="Nombre"
+            placeholder="Nombre de usuario"
             placeholderTextColor="#64748b"
             value={displayName}
             onChangeText={setDisplayName}
-            maxLength={60}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Username"
-            placeholderTextColor="#64748b"
-            value={userName}
-            onChangeText={(value) => setUserName(value.toLowerCase())}
-            autoCapitalize="none"
-            autoCorrect={false}
-            maxLength={30}
+            maxLength={40}
           />
           <TouchableOpacity
             style={[styles.button, saving && styles.buttonDisabled]}
@@ -182,7 +158,6 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   name: { color: '#fff', fontSize: 24, fontWeight: 'bold', textAlign: 'center' },
-  username: { color: '#22c55e', fontSize: 15, marginTop: 4, textAlign: 'center' },
   email: { color: '#94a3b8', fontSize: 15, marginTop: 6, textAlign: 'center' },
   scoreBox: {
     alignItems: 'center',
