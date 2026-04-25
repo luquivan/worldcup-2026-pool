@@ -5,6 +5,17 @@ import { useAuth } from '../context/AuthContext';
 import { Match, MatchesData, UserPredictions } from '@prode/shared';
 import { MatchFilter } from '../components/FilterBar';
 
+const ROUND_ES: Record<string, string> = {
+  'Round of 32': 'Ronda de 32',
+  'Round of 16': 'Octavos de final',
+  'Quarter-final': 'Cuartos de final',
+  'Semi-final': 'Semifinal',
+  'Final': 'Final',
+  'Third place play-off': 'Tercer puesto',
+  'Play-off': 'Repechaje',
+};
+const translateRound = (round?: string): string => ROUND_ES[round ?? ''] || round || 'Eliminatoria';
+
 export interface MatchSection {
   title: string;
   data: Match[];
@@ -46,7 +57,7 @@ const byKnockout = (data: MatchesData): MatchSection[] => {
   Object.values(data)
     .filter((m) => !m.group)
     .forEach((m) => {
-      const key = m.round || 'Eliminatoria';
+      const key = translateRound(m.round);
       if (!grouped[key]) grouped[key] = [];
       grouped[key].push(m);
     });
