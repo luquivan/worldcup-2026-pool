@@ -76,8 +76,7 @@ export const StandingsScreen: React.FC = () => {
               <Text style={styles.positionText}>{index + 1}</Text>
             </View>
             <View style={styles.userInfo}>
-              <Text style={styles.userName}>{item.displayName || item.userName || 'Usuario'}</Text>
-              <Text style={styles.userHandle}>@{item.userName}</Text>
+              <Text style={styles.userName}>{item.displayName || 'Usuario'}</Text>
             </View>
             <Text style={styles.score}>{item.score ?? 0} pts</Text>
           </View>

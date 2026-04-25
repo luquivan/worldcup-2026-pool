@@ -45,7 +45,7 @@ export const RegisterScreen: React.FC<Props> = ({ navigation }) => {
 
       <TextInput
         style={styles.input}
-        placeholder="Tu nombre"
+        placeholder="Nombre de usuario"
         placeholderTextColor="#888"
         value={displayName}
         onChangeText={setDisplayName}
