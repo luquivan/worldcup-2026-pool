@@ -3,11 +3,13 @@ import {
   ActivityIndicator,
   Alert,
   FlatList,
+  Share,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { LeagueWithId, UserWithId } from '@prode/shared';
 import { RootStackParamList } from '../../navigation/types';
@@ -56,8 +58,23 @@ export const LeagueDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     return unsubscribeLeaderboard;
   }, [memberIds]);
 
-  const showInviteCode = () => {
-    Alert.alert('Código de invitación', league.inviteCode);
+  const getInviteLink = () => `https://prodeapp-739a1.web.app/league/${league.slug}/join/${league.inviteCode}`;
+
+  const copyInviteCode = async () => {
+    await Clipboard.setStringAsync(league.inviteCode);
+    Alert.alert('Código copiado', league.inviteCode);
+  };
+
+  const shareInvite = async () => {
+    try {
+      await Share.share({
+        title: `Invitación a ${league.name}`,
+        message: `Sumate a mi liga "${league.name}" en Prode 2026.\nCódigo: ${league.inviteCode}\n${getInviteLink()}`,
+        url: getInviteLink(),
+      });
+    } catch (e: any) {
+      Alert.alert('Error', e.message ?? 'No se pudo compartir la invitación');
+    }
   };
 
   const goBackToLeagues = () => {
@@ -147,9 +164,12 @@ export const LeagueDetailScreen: React.FC<Props> = ({ navigation, route }) => {
               {league.description ? <Text style={styles.description}>{league.description}</Text> : null}
               <Text style={styles.meta}>{memberIds.length} miembros</Text>
 
-              <TouchableOpacity style={styles.inviteButton} onPress={showInviteCode}>
-                <Text style={styles.inviteLabel}>Invitar</Text>
+              <TouchableOpacity style={styles.inviteButton} onPress={copyInviteCode}>
+                <Text style={styles.inviteLabel}>Copiar código</Text>
                 <Text style={styles.inviteCode}>{league.inviteCode}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.shareButton} onPress={shareInvite}>
+                <Text style={styles.shareButtonText}>Compartir invitación</Text>
               </TouchableOpacity>
             </View>
 
@@ -203,6 +223,14 @@ const styles = StyleSheet.create({
   },
   inviteLabel: { color: '#fff', fontSize: 16, fontWeight: '600' },
   inviteCode: { color: '#fff', fontSize: 16, fontWeight: '800', letterSpacing: 2 },
+  shareButton: {
+    alignItems: 'center',
+    backgroundColor: '#334155',
+    borderRadius: 10,
+    marginTop: 10,
+    padding: 14,
+  },
+  shareButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   sectionTitle: { color: '#fff', fontSize: 18, fontWeight: '700', marginBottom: 12 },
   loader: { marginVertical: 18 },
   memberCard: {
