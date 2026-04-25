@@ -9,36 +9,18 @@ import {
 } from 'firebase/auth';
 import { useAuthRequest, ResponseType } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
-import { ref, get } from 'firebase/database';
-import { normalizeUsername } from '@prode/shared';
-import { auth, db } from '../firebase/config';
+import { auth } from '../firebase/config';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export const loginWithEmail = (email: string, password: string) =>
   signInWithEmailAndPassword(auth, email, password);
 
-const resolveEmail = async (identifier: string): Promise<string> => {
-  const value = identifier.trim();
-  if (value.includes('@')) return value;
+export const loginWithIdentifier = (identifier: string, password: string) =>
+  signInWithEmailAndPassword(auth, identifier.trim(), password);
 
-  const emailSnapshot = await get(ref(db, `userLoginEmails/${normalizeUsername(value)}`));
-  if (!emailSnapshot.exists()) {
-    throw new Error('No encontramos ese usuario');
-  }
-
-  return emailSnapshot.val() as string;
-};
-
-export const loginWithIdentifier = async (identifier: string, password: string) => {
-  const email = await resolveEmail(identifier);
-  return signInWithEmailAndPassword(auth, email, password);
-};
-
-export const resetPassword = async (identifier: string) => {
-  const email = await resolveEmail(identifier);
-  return sendPasswordResetEmail(auth, email);
-};
+export const resetPassword = (identifier: string) =>
+  sendPasswordResetEmail(auth, identifier.trim());
 
 export const registerWithEmail = async (
   email: string,
