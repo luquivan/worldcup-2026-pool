@@ -84,6 +84,18 @@ const findNextMatchLocation = (sections: MatchSection[]): MatchLocation | null =
   return { sectionIndex: lastSectionIndex, itemIndex: lastItemIndex };
 };
 
+const getMatchAtLocation = (sections: MatchSection[], location: MatchLocation | null): Match | null => {
+  if (!location) return null;
+  return sections[location.sectionIndex]?.data[location.itemIndex] ?? null;
+};
+
+const formatMatchDateTime = (match: Match) => {
+  const date = new Date(match.date);
+  const day = date.toLocaleDateString('es-AR', { weekday: 'short', day: 'numeric', month: 'short' });
+  const time = date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+  return `${day} · ${time}`;
+};
+
 export const MatchesScreen: React.FC = () => {
   const { user } = useAuth();
   const [filter, setFilter] = useState<MatchFilter>('date');
@@ -133,6 +145,14 @@ export const MatchesScreen: React.FC = () => {
     `${filter}:${sections.length}:${sections.map((s) => `${s.title}-${s.data.length}`).join('|')}`
   ), [filter, sections]);
 
+  const nextMatchLocation = useMemo(() => (
+    filter === 'date' && !query ? findNextMatchLocation(filteredSections) : null
+  ), [filter, filteredSections, query]);
+
+  const nextMatch = useMemo(() => (
+    getMatchAtLocation(filteredSections, nextMatchLocation)
+  ), [filteredSections, nextMatchLocation]);
+
   const selectGroup = useCallback((letter: string) => {
     setSelectedGroup(letter);
     AsyncStorage.setItem(GROUP_KEY, letter).catch(() => {});
@@ -144,6 +164,16 @@ export const MatchesScreen: React.FC = () => {
       listRef.current?.scrollToLocation({ sectionIndex: 0, itemIndex: 0, animated: false });
     }, 50);
   }, [sections]);
+
+  const scrollToNextMatch = useCallback(() => {
+    if (!nextMatchLocation) return;
+    pendingLocationRef.current = nextMatchLocation;
+    listRef.current?.scrollToLocation({
+      ...nextMatchLocation,
+      animated: true,
+      viewPosition: 0.08,
+    });
+  }, [nextMatchLocation]);
 
   useEffect(() => {
     if (loading || filter !== 'date' || query || filteredSections.length === 0) return;
@@ -202,6 +232,19 @@ export const MatchesScreen: React.FC = () => {
           ) : null}
         </View>
       )}
+
+      {nextMatch ? (
+        <TouchableOpacity style={styles.nextMatch} onPress={scrollToNextMatch} activeOpacity={0.8}>
+          <View style={styles.nextMatchCopy}>
+            <Text style={styles.nextMatchLabel}>Próximo partido</Text>
+            <Text style={styles.nextMatchTeams} numberOfLines={1}>
+              {nextMatch.homeName || nextMatch.home} vs {nextMatch.awayName || nextMatch.away}
+            </Text>
+            <Text style={styles.nextMatchMeta}>{formatMatchDateTime(nextMatch)}</Text>
+          </View>
+          <Text style={styles.nextMatchAction}>Ver</Text>
+        </TouchableOpacity>
+      ) : null}
 
       <SectionList
         ref={listRef}
@@ -298,6 +341,21 @@ const styles = StyleSheet.create({
   },
   clearSearch: { paddingHorizontal: 2, paddingVertical: 8 },
   clearSearchText: { color: '#22c55e', fontSize: 13, fontWeight: '700' },
+  nextMatch: {
+    alignItems: 'center',
+    backgroundColor: '#1e293b',
+    borderBottomColor: '#334155',
+    borderBottomWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  nextMatchCopy: { flex: 1, marginRight: 12 },
+  nextMatchLabel: { color: '#22c55e', fontSize: 12, fontWeight: '800', marginBottom: 3, textTransform: 'uppercase' },
+  nextMatchTeams: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  nextMatchMeta: { color: '#94a3b8', fontSize: 13, marginTop: 3 },
+  nextMatchAction: { color: '#22c55e', fontSize: 14, fontWeight: '800' },
   sectionHeader: {
     backgroundColor: '#0f172a',
     paddingHorizontal: 16,

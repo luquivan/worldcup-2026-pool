@@ -10,7 +10,7 @@ import {
 import { useAuthRequest, ResponseType } from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import { ref, get } from 'firebase/database';
-import { normalizeUsername, UserData } from '@prode/shared';
+import { normalizeUsername } from '@prode/shared';
 import { auth, db } from '../firebase/config';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -22,23 +22,12 @@ const resolveEmail = async (identifier: string): Promise<string> => {
   const value = identifier.trim();
   if (value.includes('@')) return value;
 
-  const usernameSnapshot = await get(ref(db, `usernames/${normalizeUsername(value)}`));
-  if (!usernameSnapshot.exists()) {
+  const emailSnapshot = await get(ref(db, `userLoginEmails/${normalizeUsername(value)}`));
+  if (!emailSnapshot.exists()) {
     throw new Error('No encontramos ese usuario');
   }
 
-  const uid = usernameSnapshot.val() as string;
-  const userSnapshot = await get(ref(db, `users/${uid}`));
-  if (!userSnapshot.exists()) {
-    throw new Error('No encontramos ese usuario');
-  }
-
-  const userData = userSnapshot.val() as UserData;
-  if (!userData.email) {
-    throw new Error('Ese usuario no tiene email asociado');
-  }
-
-  return userData.email;
+  return emailSnapshot.val() as string;
 };
 
 export const loginWithIdentifier = async (identifier: string, password: string) => {
@@ -69,14 +58,15 @@ const GOOGLE_DISCOVERY = {
   revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
 };
 
-const REDIRECT_URI = 'https://auth.expo.io/@toronjarenosa/prode2026';
+const GOOGLE_REDIRECT_URI =
+  process.env.EXPO_PUBLIC_GOOGLE_REDIRECT_URI || 'https://auth.expo.io/@toronjarenosa/prode2026';
 
 // Hook genérico — sin validación de androidClientId
 export const useGoogleAuthRequest = () =>
   useAuthRequest(
     {
       clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID!,
-      redirectUri: REDIRECT_URI,
+      redirectUri: GOOGLE_REDIRECT_URI,
       scopes: ['openid', 'profile', 'email'],
       responseType: ResponseType.Token,
       usePKCE: false,

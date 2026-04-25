@@ -48,8 +48,8 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
     setLoading(true);
     try {
       await loginWithIdentifier(identifier.trim(), password);
-    } catch (e: any) {
-      Alert.alert('Error', e.message);
+    } catch {
+      Alert.alert('Error', 'No pudimos iniciar sesión con esos datos');
     } finally {
       setLoading(false);
     }
@@ -65,8 +65,8 @@ export const LoginScreen: React.FC<Props> = ({ navigation }) => {
     try {
       await resetPassword(identifier.trim());
       Alert.alert('Listo', 'Te mandamos un email para recuperar tu contraseña');
-    } catch (e: any) {
-      Alert.alert('Error', e.message);
+    } catch {
+      Alert.alert('Listo', 'Si existe una cuenta con esos datos, te mandamos un email para recuperar tu contraseña');
     } finally {
       setLoading(false);
     }
