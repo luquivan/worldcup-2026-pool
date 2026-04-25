@@ -1,7 +1,7 @@
 import React, { useCallback, useMemo, useRef, useState, useEffect } from 'react';
 import {
   View, Text, SectionList, StyleSheet, ActivityIndicator,
-  TouchableOpacity, ScrollView, TextInput,
+  TouchableOpacity, ScrollView, TextInput, SectionListData, SectionListRenderItemInfo,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../context/AuthContext';
@@ -9,6 +9,7 @@ import { useMatches } from '../../hooks/useMatches';
 import { MatchCard } from '../../components/MatchCard';
 import { FilterBar, MatchFilter } from '../../components/FilterBar';
 import { Match } from '@prode/shared';
+import { getTeamDisplayName, getTeamSearchValues, normalizeSearchText } from '../../utils/teams';
 
 type MatchSection = { title: string; data: Match[] };
 type MatchLocation = { sectionIndex: number; itemIndex: number };
@@ -42,19 +43,13 @@ const GroupChips: React.FC<{
   </View>
 );
 
-const normalize = (value: string) => value.trim().toLowerCase();
-
 const matchContains = (match: Match, query: string) => {
   if (!query) return true;
 
   return [
-    match.home,
-    match.homeName,
-    match.away,
-    match.awayName,
-  ]
-    .filter(Boolean)
-    .some((value) => normalize(String(value)).includes(query));
+    ...getTeamSearchValues(match.home, match.homeName),
+    ...getTeamSearchValues(match.away, match.awayName),
+  ].some((value) => value.includes(query));
 };
 
 const filterSections = (sections: MatchSection[], query: string): MatchSection[] => {
@@ -102,7 +97,7 @@ export const MatchesScreen: React.FC = () => {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const { sections, predictions, loading, refreshing, refresh } = useMatches(filter);
-  const listRef = useRef<SectionList<Match>>(null);
+  const listRef = useRef<SectionList<Match, MatchSection>>(null);
   const autoScrollKeyRef = useRef('');
   const pendingLocationRef = useRef<MatchLocation | null>(null);
 
@@ -117,8 +112,6 @@ export const MatchesScreen: React.FC = () => {
         .catch(() => setSelectedGroup('A'));
       return;
     }
-
-    setSelectedGroup(null);
   }, [filter, sections]);
 
   const groupLetters = useMemo(() => (
@@ -134,7 +127,7 @@ export const MatchesScreen: React.FC = () => {
   ), [filter, sections, selectedGroup]);
 
   const query = useMemo(() => (
-    filter === 'group' ? '' : normalize(searchQuery)
+    filter === 'group' ? '' : normalizeSearchText(searchQuery)
   ), [filter, searchQuery]);
 
   const filteredSections = useMemo(() => (
@@ -152,6 +145,11 @@ export const MatchesScreen: React.FC = () => {
   const nextMatch = useMemo(() => (
     getMatchAtLocation(filteredSections, nextMatchLocation)
   ), [filteredSections, nextMatchLocation]);
+
+  const handleFilterChange = useCallback((nextFilter: MatchFilter) => {
+    if (nextFilter === filter) return;
+    setFilter(nextFilter);
+  }, [filter]);
 
   const selectGroup = useCallback((letter: string) => {
     setSelectedGroup(letter);
@@ -174,6 +172,21 @@ export const MatchesScreen: React.FC = () => {
       viewPosition: 0.08,
     });
   }, [nextMatchLocation]);
+
+  const renderMatch = useCallback(({ item }: SectionListRenderItemInfo<Match, MatchSection>) => (
+    <MatchCard
+      match={item}
+      userId={user?.uid}
+      prediction={predictions[String(item.game)]}
+      showDate={filter !== 'date'}
+    />
+  ), [filter, predictions, user?.uid]);
+
+  const renderSectionHeader = useCallback(({ section }: { section: SectionListData<Match, MatchSection> }) => (
+    <View style={styles.sectionHeader}>
+      <Text style={styles.sectionTitle}>{section.title}</Text>
+    </View>
+  ), []);
 
   useEffect(() => {
     if (loading || filter !== 'date' || query || filteredSections.length === 0) return;
@@ -206,7 +219,7 @@ export const MatchesScreen: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <FilterBar active={filter} onChange={setFilter} />
+      <FilterBar active={filter} onChange={handleFilterChange} />
 
       {filter === 'group' && groupLetters.length > 0 ? (
         <GroupChips
@@ -238,7 +251,7 @@ export const MatchesScreen: React.FC = () => {
           <View style={styles.nextMatchCopy}>
             <Text style={styles.nextMatchLabel}>Próximo partido</Text>
             <Text style={styles.nextMatchTeams} numberOfLines={1}>
-              {nextMatch.homeName || nextMatch.home} vs {nextMatch.awayName || nextMatch.away}
+              {getTeamDisplayName(nextMatch.home, nextMatch.homeName)} vs {getTeamDisplayName(nextMatch.away, nextMatch.awayName)}
             </Text>
             <Text style={styles.nextMatchMeta}>{formatMatchDateTime(nextMatch)}</Text>
           </View>
@@ -250,22 +263,16 @@ export const MatchesScreen: React.FC = () => {
         ref={listRef}
         sections={filteredSections}
         keyExtractor={(item: Match) => String(item.game)}
-        renderItem={({ item }) => (
-          <MatchCard
-            match={item}
-            userId={user?.uid}
-            prediction={predictions[String(item.game)]}
-            showDate={filter !== 'date'}
-          />
-        )}
-        renderSectionHeader={({ section }) => (
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-          </View>
-        )}
+        renderItem={renderMatch}
+        renderSectionHeader={renderSectionHeader}
         refreshing={refreshing}
         onRefresh={refresh}
         contentContainerStyle={styles.list}
+        initialNumToRender={6}
+        maxToRenderPerBatch={6}
+        updateCellsBatchingPeriod={40}
+        windowSize={5}
+        removeClippedSubviews={false}
         stickySectionHeadersEnabled
         onScrollToIndexFailed={() => {
           const location = pendingLocationRef.current;
