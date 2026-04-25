@@ -7,7 +7,14 @@
     "shell": "npm run build && firebase functions:shell",
     "start": "npm run shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log"
+    "logs": "firebase functions:log",
+    "test": "jest"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "testMatch": ["**/*.test.ts"],
+    "moduleFileExtensions": ["ts", "js"]
   },
   "engines": {
     "node": "22"
@@ -18,8 +25,11 @@
     "firebase-functions": "^7.0.3"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "firebase-functions-test": "^3.2.0",
-    "typescript": "^5.4.0"
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.9",
+    "typescript": "^5.9.3"
   },
   "private": true
 }

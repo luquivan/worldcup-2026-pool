@@ -2,6 +2,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import { onValueWritten } from 'firebase-functions/v2/database';
 import { logger } from 'firebase-functions';
 import * as admin from 'firebase-admin';
+import { calculatePoints } from './scoring';
 
 admin.initializeApp();
 const db = admin.database();
@@ -37,51 +38,6 @@ interface FifaApiResponse {
   Results: FifaMatch[];
 }
 
-const getWinner = (home: number, away: number): 'home' | 'away' | 'draw' => {
-  if (home > away) return 'home';
-  if (home < away) return 'away';
-  return 'draw';
-};
-
-const isClose = (
-  homeScore: number, awayScore: number,
-  homePred: number, awayPred: number
-): boolean =>
-  Math.abs(homePred - homeScore) <= 1 && Math.abs(awayPred - awayScore) <= 1;
-
-/**
- * 6 pts exact / 3 pts close (correct winner + each goal within 1) /
- * 2 pts correct winner / 0 pts wrong
- * +1 bonus if predicted draw in knockout, went to penalties, and penalty winner correct
- */
-const calculatePoints = (
-  homeScore: number,
-  awayScore: number,
-  homePrediction: number | null,
-  awayPrediction: number | null,
-  penaltyWinner: 'home' | 'away' | null,
-  predPenaltyWinner?: 'home' | 'away'
-): number => {
-  if (homeScore < 0 || homePrediction === null || awayPrediction === null) return 0;
-
-  let points = 0;
-
-  if (homeScore === homePrediction && awayScore === awayPrediction) {
-    points = 6;
-  } else if (getWinner(homeScore, awayScore) === getWinner(homePrediction, awayPrediction)) {
-    points = isClose(homeScore, awayScore, homePrediction, awayPrediction) ? 3 : 2;
-  }
-
-  if (
-    penaltyWinner !== null &&
-    homePrediction === awayPrediction &&
-    predPenaltyWinner === penaltyWinner
-  ) {
-    points += 1;
-  }
-
-  return points;
-};
 
 export const updateMatchScores = onSchedule('every 1 minutes', async () => {
   logger.info('Updating match scores from FIFA API...');
