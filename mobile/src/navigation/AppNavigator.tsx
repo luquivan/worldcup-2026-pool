@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Text } from 'react-native';
+import { Text, View } from 'react-native';
 import { AppTabParamList, RootStackParamList } from './types';
 import { MatchesScreen } from '../screens/app/MatchesScreen';
 import { StandingsScreen } from '../screens/app/StandingsScreen';
@@ -82,7 +82,8 @@ export const AppNavigator: React.FC = () => (
   </Stack.Navigator>
 );
 
-// Placeholder para pantallas que Rama va a implementar
 const PlaceholderScreen = (name: string): React.FC => () => (
-  <Text style={{ color: '#fff', padding: 24, textAlign: 'center' }}>{name} — pendiente (feat/leagues)</Text>
+  <View style={{ flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' }}>
+    <Text style={{ color: '#94a3b8', padding: 24, textAlign: 'center' }}>{name} — en desarrollo (feat/leagues)</Text>
+  </View>
 );
