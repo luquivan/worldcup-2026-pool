@@ -34,6 +34,7 @@ export const LeagueDetailScreen: React.FC<Props> = ({ navigation, route }) => {
   const [leagueName, setLeagueName] = useState(league.name);
   const [leagueDescription, setLeagueDescription] = useState(league.description ?? '');
   const [editingDetails, setEditingDetails] = useState(false);
+  const [inviteExpanded, setInviteExpanded] = useState(false);
   const [nameInput, setNameInput] = useState(league.name);
   const [descriptionInput, setDescriptionInput] = useState(league.description ?? '');
   const [savingDetails, setSavingDetails] = useState(false);
@@ -104,6 +105,8 @@ export const LeagueDetailScreen: React.FC<Props> = ({ navigation, route }) => {
     setDescriptionInput(leagueDescription);
     setEditingDetails(false);
   };
+
+  const toggleInvite = () => setInviteExpanded((value) => !value);
 
   const handleSaveDetails = async () => {
     const trimmedName = nameInput.trim();
@@ -347,25 +350,34 @@ export const LeagueDetailScreen: React.FC<Props> = ({ navigation, route }) => {
               <Text style={styles.meta}>{memberIds.length} miembros</Text>
 
               <View style={styles.invitePanel}>
-                <View style={styles.inviteHeader}>
-                  <View>
+                <TouchableOpacity style={styles.inviteHeader} onPress={toggleInvite} activeOpacity={0.8}>
+                  <View style={styles.inviteHeaderCopy}>
                     <Text style={styles.inviteTitle}>Invitación</Text>
-                    <Text style={styles.inviteHelp}>Copiá el código o compartí el link.</Text>
+                    <Text style={styles.inviteHelp}>
+                      {inviteExpanded ? 'Copiá el código o compartí el link.' : 'Tocá para ver el código y compartirlo.'}
+                    </Text>
                   </View>
-                  {copied ? <Text style={styles.copiedText}>Copiado</Text> : null}
-                </View>
-                <TouchableOpacity style={styles.codeBox} onPress={copyInviteCode} activeOpacity={0.8}>
-                  <Text style={styles.codeLabel}>Código</Text>
-                  <Text style={styles.inviteCode}>{inviteCode}</Text>
+                  <View style={styles.inviteHeaderMeta}>
+                    {copied ? <Text style={styles.copiedText}>Copiado</Text> : null}
+                    <Text style={styles.chevron}>{inviteExpanded ? '▴' : '▾'}</Text>
+                  </View>
                 </TouchableOpacity>
-                <View style={styles.inviteActions}>
-                  <TouchableOpacity style={styles.copyButton} onPress={copyInviteCode}>
-                    <Text style={styles.copyButtonText}>Copiar</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.shareButton} onPress={shareInvite}>
-                    <Text style={styles.shareButtonText}>Compartir</Text>
-                  </TouchableOpacity>
-                </View>
+                {inviteExpanded ? (
+                  <>
+                    <TouchableOpacity style={styles.codeBox} onPress={copyInviteCode} activeOpacity={0.8}>
+                      <Text style={styles.codeLabel}>Código</Text>
+                      <Text style={styles.inviteCode}>{inviteCode}</Text>
+                    </TouchableOpacity>
+                    <View style={styles.inviteActions}>
+                      <TouchableOpacity style={styles.copyButton} onPress={copyInviteCode}>
+                        <Text style={styles.copyButtonText}>Copiar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.shareButton} onPress={shareInvite}>
+                        <Text style={styles.shareButtonText}>Compartir</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                ) : null}
               </View>
             </View>
 
@@ -445,19 +457,30 @@ const styles = StyleSheet.create({
   },
   inviteHeader: {
     alignItems: 'center',
+    gap: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 12,
+  },
+  inviteHeaderCopy: {
+    flex: 1,
+    paddingRight: 8,
+  },
+  inviteHeaderMeta: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 10,
   },
   inviteTitle: { color: '#fff', fontSize: 16, fontWeight: '700' },
   inviteHelp: { color: '#94a3b8', fontSize: 13, marginTop: 2 },
   copiedText: { color: '#22c55e', fontSize: 13, fontWeight: '700' },
+  chevron: { color: '#94a3b8', fontSize: 18, fontWeight: '800' },
   codeBox: {
     alignItems: 'center',
     backgroundColor: '#1e293b',
     borderColor: '#475569',
     borderRadius: 8,
     borderWidth: 1,
+    marginTop: 12,
     marginBottom: 10,
     padding: 14,
   },
